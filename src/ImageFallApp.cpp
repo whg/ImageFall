@@ -31,63 +31,16 @@ class ImageFallApp : public App {
 	int mMode;
 };
 
-Channel edgeDetectArea( Channel *surface, float q=1)
-{
-	// make a copy of the original before we start writing on it
-	Channel inputSurface( surface->clone() );
-	Channel outputSurface( surface->clone() );
-	
-	// we'll need to iterate the inputSurface as well as the output surface
-	Channel::ConstIter inputIter( inputSurface, surface->getBounds() );
-	Channel::Iter outputIter( outputSurface.getIter() );
-	
-	while( inputIter.line() ) {
-		outputIter.line();
-		while( inputIter.pixel() ) {
-			outputIter.pixel();
-			
-			auto v = inputIter.v();
-			
-			float output = 0;
-			vector<int> indices = { -1, 1 };
-			for (auto xi : indices) {
-				for (auto yi : indices) {
-					auto op = inputIter.vClamped(xi, yi);
-//					if (op < v)  {
-						output+= op;
-//					}
-				}
-			}
-			
-			output *= 0.25;
-			outputIter.v() = constrain<uint8_t>(output, 0, 255);
-			
-			
-			
-//			if (north < v) output+= north - v;
-//			
-//			
-//			int32_t sumRed = inputIter.vClamped( 0, -1 ) + inputIter.vClamped( -1, 0 ) + inputIter.v() * -4 + inputIter.vClamped( 1, 0 ) + inputIter.vClamped( 0, 1 );
-//			outputIter.v() = constrain<uint8_t>( abs( sumRed ), 0, 255 );
-//			int32_t sumGreen = inputIter.gClamped( 0, -1 ) + inputIter.gClamped( -1, 0 ) + inputIter.g() * -4 + inputIter.gClamped( 1, 0 ) + inputIter.gClamped( 0, 1 );
-//			outputIter.g() = constrain<int32_t>( abs( sumGreen ), 0, 255 );
-//			int32_t sumBlue = inputIter.bClamped( 0, -1 ) + inputIter.bClamped( -1, 0 ) + inputIter.b() * -4 + inputIter.bClamped( 1, 0 ) + inputIter.bClamped( 0, 1 );
-//			outputIter.b() = constrain<int32_t>( abs( sumBlue ), 0, 255 );
-		}
-	}
-	
-	return outputSurface;
-}
-
 void ImageFallApp::setup() {
 
-	mSurface = Surface(loadImage(loadAsset("input_3.jpg")));
+//    mSurface = Surface(loadImage(loadFile("/Users/whg/Desktop/-/chessboard_a4.png")));
+//	mSurface = Surface(loadImage(loadAsset("eagle.jpg")));
+    mSurface = Surface(loadImage(loadAsset("eagle.jpg")));
 //	mSurface = Surface(loadImage(loadAsset("maia.jpg")));
 	mChannel = Channel(mSurface);
-	
-	auto channel = edgeDetectArea(&mChannel);
-	
-	mTexture = gl::Texture::create(mChannel);
+		
+//	mTexture = gl::Texture::create(mChannel);
+    mTexture = gl::Texture::create(mSurface);
 	setWindowSize(mSurface.getSize());
 	
 	
@@ -104,8 +57,8 @@ void ImageFallApp::setup() {
 	for (size_t i = 0; i < mFbos.size(); i++) {
 		mFbos[i] = gl::Fbo::create(mTexture->getWidth(), mTexture->getHeight());
 		
-		mFbos[i]->getColorTexture()->setMagFilter(GL_NEAREST);
-		mFbos[i]->getColorTexture()->setMinFilter(GL_NEAREST);
+//		mFbos[i]->getColorTexture()->setMagFilter(GL_NEAREST);
+//		mFbos[i]->getColorTexture()->setMinFilter(GL_NEAREST);
 //		mTexture->setMinFilter(GL_NEAREST);
 //		mTexture->setMagFilter(GL_NEAREST);
 		
@@ -132,7 +85,7 @@ void ImageFallApp::mouseDrag( MouseEvent event )
 //	mExposure = powf( event.getPos().x / (float)getWindowWidth() * 2, 4 );
 //	console() << "Exposure: " << mExposure << std::endl;
 	
-	mOffset = lmap<float>(event.getPos().x, 0, getWindowWidth(), 0, 20);
+	mOffset = lmap<float>(event.getPos().x, 0, getWindowWidth(), 0, 50);
 	
 //	console() << "Offset: " << mOffset << std::endl;
 }
@@ -143,16 +96,20 @@ void ImageFallApp::mouseDown( MouseEvent event )
 
 void ImageFallApp::keyDown(KeyEvent event) {
 	if (event.getChar() == 'r') {
-		for (size_t i = 0; i < mFbos.size(); i++) {
-			
-			mFbos[i]->bindFramebuffer();
-			gl::draw(mTexture);
-			mFbos[i]->unbindFramebuffer();
-		}
-		
-		cout << endl;
-		cout << endl;
-		cout << endl;
+//		for (size_t i = 0; i < mFbos.size(); i++) {
+//			
+//			mFbos[i]->bindFramebuffer();
+//			gl::draw(mTexture);
+//			mFbos[i]->unbindFramebuffer();
+//		}
+//		
+//		cout << endl;
+//		cout << endl;
+//		cout << endl;
+        mFboCounter = 1;
+        mFbos[0]->bindFramebuffer();
+        gl::draw(mTexture);
+        mFbos[0]->unbindFramebuffer();
 	}
 	
 	auto key = event.getChar();
@@ -174,6 +131,18 @@ void ImageFallApp::update()
 //	gl::ScopedFramebuffer fb(mFbo);
 	
 	
+    if ( getElapsedFrames() % 120 == 0 ) {
+        try {
+            auto newShader = gl::GlslProg::create( gl::GlslProg::Format()
+                                                  .vertex( app::loadAsset("shader.vert") )
+                                                  .fragment( app::loadAsset("function.frag") ) );
+            
+            mShader = newShader;
+        }
+        catch (gl::GlslProgCompileExc exc) {
+            cout << exc.what() << endl;
+        }
+    }
 
 }
 
@@ -225,7 +194,7 @@ void ImageFallApp::draw()
 //	auto surf = fbo1->readPixels8u(Area(425, 445, 430, 446));
 //	auto surf = fbo1->readPixels8u(Area(327, 344, 340, 349));
 
-	auto surf = fbo1->readPixels8u(fbo1->getBounds());
+//	auto surf = fbo1->readPixels8u(fbo1->getBounds());
 
 //	stringstream ss;
 //	ss << "/Users/whg/Desktop/imgs/";
