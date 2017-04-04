@@ -34,8 +34,8 @@ class ImageFallApp : public App {
 void ImageFallApp::setup() {
 
 //    mSurface = Surface(loadImage(loadFile("/Users/whg/Desktop/-/chessboard_a4.png")));
-//	mSurface = Surface(loadImage(loadAsset("eagle.jpg")));
-    mSurface = Surface(loadImage(loadAsset("eagle.jpg")));
+	mSurface = Surface(loadImage(loadAsset("eagle.jpg")));
+//    mSurface = Surface(loadImage(loadFile("/Users/whg/Desktop/stillatplay.png")));
 //	mSurface = Surface(loadImage(loadAsset("maia.jpg")));
 	mChannel = Channel(mSurface);
 		
@@ -44,7 +44,7 @@ void ImageFallApp::setup() {
 	setWindowSize(mSurface.getSize());
 	
 	
-	mShader = gl::GlslProg::create(gl::GlslProg::Format().vertex(loadAsset("shader.vert")).fragment(loadAsset("shader.frag")));
+	mShader = gl::GlslProg::create(gl::GlslProg::Format().vertex(loadAsset("shader.vert")).fragment(loadAsset("function.frag")));
 	
 	gl::Fbo::Format format;
 //	format.setSamples( 4 ); // uncomment this to enable 4x antialiasing
